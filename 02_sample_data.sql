@@ -1,7 +1,7 @@
 -- ============================================================
 -- 샘플 데이터 입력
 -- 실행 전 반드시 01_schema.sql을 먼저 실행할 것
--- 입력 순서: users -> reels -> hashtags -> likes -> comments -> reel_hashtags
+-- 입력 순서: users -> reels -> likes -> comments
 --           (FK가 참조하는 부모 테이블이 먼저 채워져야 함)
 -- ============================================================
 
@@ -26,41 +26,27 @@ INSERT INTO users (user_id, username, email, full_name, created_at) VALUES
 
 -- ------------------------------------------------------------
 -- 2. reels (15행)
+--    hashtags 컬럼: 기존 reel_hashtags 연결 내역을 쉼표 구분 문자열로 변환
 -- ------------------------------------------------------------
-INSERT INTO reels (reel_id, user_id, caption, video_url, duration_seconds, view_count, upload_date) VALUES
-(1,  1, '제주도 노을 daily 브이로그',      'https://reels.example.com/v1',  25, 152000, '2026-06-20'),
-(2,  1, '부산 여행 하이라이트',            'https://reels.example.com/v2',  30,  98000, '2026-07-01'),
-(3,  2, '매운 라면 챌린지',                'https://reels.example.com/v3',  20, 210000, '2026-06-15'),
-(4,  2, '홈메이드 파스타 daily 레시피',    'https://reels.example.com/v4',  40,  45000, '2026-07-05'),
-(5,  3, '커버댄스 챌린지',                 'https://reels.example.com/v5',  15, 320000, '2026-06-25'),
-(6,  3, '연습실 daily 비하인드',           'https://reels.example.com/v6',  22,  87000, '2026-07-08'),
-(7,  4, '아침 daily 루틴 브이로그',        'https://reels.example.com/v7',  35,  61000, '2026-06-30'),
-(8,  5, '신작 게임 첫 플레이',             'https://reels.example.com/v8',  45, 133000, '2026-07-02'),
-(9,  5, '게임 speedrun 도전',              'https://reels.example.com/v9',  28,  76000, '2026-07-10'),
-(10, 6, '강아지 목욕시키기',               'https://reels.example.com/v10', 18, 254000, '2026-06-18'),
-(11, 6, '고양이 첫 산책',                  'https://reels.example.com/v11', 20, 190000, '2026-07-06'),
-(12, 7, '5분 홈트레이닝 daily',            'https://reels.example.com/v12', 12, 342000, '2026-06-22'),
-(13, 8, '수채화 그리기 타임랩스',          'https://reels.example.com/v13', 33,  58000, '2026-07-03'),
-(14, 9, '기타 커버 연주',                  'https://reels.example.com/v14', 27, 121000, '2026-06-28'),
-(15, 11,'책 추천 daily 브이로그',          'https://reels.example.com/v15', 24,  39000, '2026-07-09');
+INSERT INTO reels (reel_id, user_id, caption, video_url, duration_seconds, view_count, upload_date, hashtags) VALUES
+(1,  1, '제주도 노을 daily 브이로그',      'https://reels.example.com/v1',  25, 152000, '2026-06-20', 'travel,daily'),
+(2,  1, '부산 여행 하이라이트',            'https://reels.example.com/v2',  30,  98000, '2026-07-01', 'travel'),
+(3,  2, '매운 라면 챌린지',                'https://reels.example.com/v3',  20, 210000, '2026-06-15', 'food'),
+(4,  2, '홈메이드 파스타 daily 레시피',    'https://reels.example.com/v4',  40,  45000, '2026-07-05', 'food,daily'),
+(5,  3, '커버댄스 챌린지',                 'https://reels.example.com/v5',  15, 320000, '2026-06-25', 'dance'),
+(6,  3, '연습실 daily 비하인드',           'https://reels.example.com/v6',  22,  87000, '2026-07-08', 'dance,daily'),
+(7,  4, '아침 daily 루틴 브이로그',        'https://reels.example.com/v7',  35,  61000, '2026-06-30', 'daily'),
+(8,  5, '신작 게임 첫 플레이',             'https://reels.example.com/v8',  45, 133000, '2026-07-02', 'game'),
+(9,  5, '게임 speedrun 도전',              'https://reels.example.com/v9',  28,  76000, '2026-07-10', 'game'),
+(10, 6, '강아지 목욕시키기',               'https://reels.example.com/v10', 18, 254000, '2026-06-18', 'pet,daily'),
+(11, 6, '고양이 첫 산책',                  'https://reels.example.com/v11', 20, 190000, '2026-07-06', 'pet'),
+(12, 7, '5분 홈트레이닝 daily',            'https://reels.example.com/v12', 12, 342000, '2026-06-22', 'fitness,daily'),
+(13, 8, '수채화 그리기 타임랩스',          'https://reels.example.com/v13', 33,  58000, '2026-07-03', 'art'),
+(14, 9, '기타 커버 연주',                  'https://reels.example.com/v14', 27, 121000, '2026-06-28', 'music'),
+(15, 11,'책 추천 daily 브이로그',          'https://reels.example.com/v15', 24,  39000, '2026-07-09', 'book,daily');
 
 -- ------------------------------------------------------------
--- 3. hashtags (10행)
--- ------------------------------------------------------------
-INSERT INTO hashtags (hashtag_id, tag_name) VALUES
-(1,  'travel'),
-(2,  'food'),
-(3,  'dance'),
-(4,  'daily'),
-(5,  'game'),
-(6,  'pet'),
-(7,  'fitness'),
-(8,  'art'),
-(9,  'music'),
-(10, 'book');
-
--- ------------------------------------------------------------
--- 4. likes (25행)
+-- 3. likes (25행)
 -- ------------------------------------------------------------
 INSERT INTO likes (user_id, reel_id) VALUES
 (2, 1), (3, 1), (4, 1), (5, 1),
@@ -72,7 +58,7 @@ INSERT INTO likes (user_id, reel_id) VALUES
 (9, 2);
 
 -- ------------------------------------------------------------
--- 5. comments (16행)
+-- 4. comments (16행)
 -- ------------------------------------------------------------
 INSERT INTO comments (user_id, reel_id, content) VALUES
 (2, 1,  '제주도 진짜 예쁘네요'),
@@ -91,23 +77,3 @@ INSERT INTO comments (user_id, reel_id, content) VALUES
 (11,7,  '루틴 참고할게요'),
 (6, 8,  '신작 게임 재밌어 보여요'),
 (2, 11, '고양이 산책 신기해요');
-
--- ------------------------------------------------------------
--- 6. reel_hashtags (21행)
--- ------------------------------------------------------------
-INSERT INTO reel_hashtags (reel_id, hashtag_id) VALUES
-(1, 1), (1, 4),
-(2, 1),
-(3, 2),
-(4, 2), (4, 4),
-(5, 3),
-(6, 3), (6, 4),
-(7, 4),
-(8, 5),
-(9, 5),
-(10, 6), (10, 4),
-(11, 6),
-(12, 7), (12, 4),
-(13, 8),
-(14, 9),
-(15, 10), (15, 4);

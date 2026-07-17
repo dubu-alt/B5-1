@@ -8,7 +8,7 @@
 PRAGMA foreign_keys = ON;
 
 -- ============================================================
--- [기본 조회] 4개 - WHERE, ORDER BY, LIMIT 포함
+-- [기본 조회] 5개 - WHERE, ORDER BY, LIMIT, LIKE 포함
 -- ============================================================
 
 -- Q1. 조회수 10만 이상인 릴스 조회
@@ -36,43 +36,50 @@ SELECT reel_id, caption
 FROM reels
 WHERE caption LIKE '%daily%';
 
+-- Q5. 해시태그에 'daily' 태그가 포함된 릴스 검색
+-- 확인 목적: hashtags 컬럼(쉼표로 구분된 텍스트)에서도 LIKE로 태그 검색이
+--           가능함을 보여준다. 별도의 hashtags 테이블 없이도 태그 검색 자체는 된다.
+SELECT reel_id, caption, hashtags
+FROM reels
+WHERE hashtags LIKE '%daily%';
+
 -- ============================================================
 -- [조인] 4개 - INNER JOIN 2개 이상, LEFT JOIN 1개 이상
 -- ============================================================
 
--- Q5. 릴스와 업로더(사용자) 정보를 함께 조회 (INNER JOIN)
+-- Q6. 릴스와 업로더(사용자) 정보를 함께 조회 (INNER JOIN)
 -- 확인 목적: 각 릴스를 누가 올렸는지 확인한다
 SELECT r.reel_id, r.caption, u.username
 FROM reels r
 INNER JOIN users u ON r.user_id = u.user_id;
 
--- Q6. 댓글, 작성자, 대상 릴스를 함께 조회 (INNER JOIN 2회)
+-- Q7. 댓글, 작성자, 대상 릴스를 함께 조회 (INNER JOIN 2회)
 -- 확인 목적: 어떤 사용자가 어떤 릴스에 어떤 댓글을 달았는지 확인한다
 SELECT c.comment_id, u.username AS commenter, r.caption, c.content
 FROM comments c
 INNER JOIN users u ON c.user_id = u.user_id
 INNER JOIN reels r ON c.reel_id = r.reel_id;
 
--- Q7. 댓글이 하나도 없는 릴스 찾기 (LEFT JOIN)
+-- Q8. 댓글이 하나도 없는 릴스 찾기 (LEFT JOIN)
 -- 확인 목적: 댓글 반응이 없는 릴스를 파악한다
 SELECT r.reel_id, r.caption
 FROM reels r
 LEFT JOIN comments c ON r.reel_id = c.reel_id
 WHERE c.comment_id IS NULL;
 
--- Q8. 릴스와 해당 릴스에 붙은 해시태그 목록 조회 (INNER JOIN)
--- 확인 목적: 릴스별로 어떤 해시태그가 달려 있는지 확인한다
-SELECT r.reel_id, r.caption, h.tag_name
-FROM reels r
-INNER JOIN reel_hashtags rh ON r.reel_id = rh.reel_id
-INNER JOIN hashtags h ON rh.hashtag_id = h.hashtag_id
+-- Q9. 릴스에 좋아요를 누른 사용자 목록 조회 (INNER JOIN 2회)
+-- 확인 목적: 어떤 사용자가 어떤 릴스에 좋아요를 눌렀는지 확인한다
+SELECT r.reel_id, r.caption, u.username AS liked_by
+FROM likes l
+INNER JOIN users u ON l.user_id = u.user_id
+INNER JOIN reels r ON l.reel_id = r.reel_id
 ORDER BY r.reel_id;
 
 -- ============================================================
 -- [집계] 3개 - COUNT/SUM/AVG 중 2개 이상 + GROUP BY
 -- ============================================================
 
--- Q9. 사용자별 업로드한 릴스 수와 총 조회수 (COUNT, SUM)
+-- Q10. 사용자별 업로드한 릴스 수와 총 조회수 (COUNT, SUM)
 -- 확인 목적: 어떤 사용자가 릴스를 많이 올리고 조회수를 많이 받았는지 확인한다
 SELECT u.username,
        COUNT(r.reel_id) AS reel_count,
@@ -82,15 +89,15 @@ INNER JOIN reels r ON u.user_id = r.user_id
 GROUP BY u.username
 ORDER BY total_views DESC;
 
--- Q10. 해시태그별로 사용된 릴스 개수 집계 (COUNT)
--- 확인 목적: 어떤 해시태그가 가장 많이 쓰이는지 확인한다
-SELECT h.tag_name, COUNT(rh.reel_id) AS reel_count
-FROM hashtags h
-INNER JOIN reel_hashtags rh ON h.hashtag_id = rh.hashtag_id
-GROUP BY h.tag_name
-ORDER BY reel_count DESC;
+-- Q11. 릴스별 좋아요 개수 집계 (COUNT)
+-- 확인 목적: 어떤 릴스가 좋아요를 가장 많이 받았는지 확인한다
+SELECT r.reel_id, r.caption, COUNT(l.like_id) AS like_count
+FROM reels r
+LEFT JOIN likes l ON r.reel_id = l.reel_id
+GROUP BY r.reel_id, r.caption
+ORDER BY like_count DESC;
 
--- Q11. 사용자가 올린 릴스들의 평균 조회수 (AVG)
+-- Q12. 사용자가 올린 릴스들의 평균 조회수 (AVG)
 -- 확인 목적: 사용자별 평균 조회수 성과를 비교한다
 SELECT u.username, AVG(r.view_count) AS avg_views
 FROM users u
@@ -99,42 +106,42 @@ GROUP BY u.username
 ORDER BY avg_views DESC;
 
 -- ============================================================
--- [서브쿼리] 1개 이상
+-- [서브쿼리] 2개
 -- ============================================================
 
--- Q12. 전체 릴스 평균 조회수보다 조회수가 높은 릴스 조회 (서브쿼리)
+-- Q13. 전체 릴스 평균 조회수보다 조회수가 높은 릴스 조회 (서브쿼리)
 -- 확인 목적: 평균 이상의 성과를 낸 릴스를 걸러낸다
 SELECT reel_id, caption, view_count
 FROM reels
 WHERE view_count > (SELECT AVG(view_count) FROM reels)
 ORDER BY view_count DESC;
 
--- Q13. 댓글을 한 번도 작성하지 않은 사용자 조회 (서브쿼리)
+-- Q14. 댓글을 한 번도 작성하지 않은 사용자 조회 (서브쿼리)
 -- 확인 목적: 댓글 활동이 없는 사용자를 파악한다
 SELECT username
 FROM users
 WHERE user_id NOT IN (SELECT DISTINCT user_id FROM comments);
 
 -- ============================================================
--- [데이터 수정 및 삭제] 2개 이상
+-- [데이터 수정 및 삭제] 2개
 -- ============================================================
 
--- Q14. 특정 릴스(reel_id = 3)의 조회수를 5000 증가시키기 (UPDATE)
+-- Q15. 특정 릴스(reel_id = 3)의 조회수를 5000 증가시키기 (UPDATE)
 -- 확인 목적: 조회수 증가 처리가 정상 반영되는지 확인한다
 UPDATE reels
 SET view_count = view_count + 5000
 WHERE reel_id = 3;
 
--- Q15. 특정 좋아요 취소 처리 (DELETE)
+-- Q16. 특정 좋아요 취소 처리 (DELETE)
 -- 확인 목적: 좋아요 취소 시 해당 레코드가 삭제되는지 확인한다
 DELETE FROM likes
 WHERE user_id = 9 AND reel_id = 2;
 
 -- ============================================================
--- [인덱스] 1개 이상
+-- [인덱스] 1개
 -- ============================================================
 
--- Q16. reels.user_id 컬럼에 인덱스 생성
+-- Q17. reels.user_id 컬럼에 인덱스 생성
 -- 적용 이유: "사용자별 릴스 조회(WHERE user_id = ?)"와 users-reels JOIN 조건이
 --           매우 빈번하게 사용되므로, 이 컬럼에 인덱스를 걸어 조회 속도를 높인다
 CREATE INDEX idx_reels_user_id ON reels(user_id);
