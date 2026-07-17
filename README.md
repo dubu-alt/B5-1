@@ -28,7 +28,8 @@ project-root/
 
 ## ERD (Entity-Relationship Diagram)
 <p align="center">
-  <img src="SQL Diagram.png">
+  <img src="SQL Diagram.png" width = "49%" />
+  <img src="Relationship.png" width = "49%" />
 </p>
 
 ## 테이블 설계

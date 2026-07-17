@@ -1,6 +1,6 @@
 /* ============================================================
 - 실행 환경: SQLite
-- 실행 순서: 01_schema.sql -> 02_sample_data.sql -> 03_queries.sql -> 04_bonus.sql
+- 실행 순서: 01_schema.sql -> 02_sample_data.sql -> 03_queries.sql
 
 - 테이블 4개로 단순화한 버전입니다.
   (원래는 hashtags, reel_hashtags를 별도 테이블로 뒀지만,
