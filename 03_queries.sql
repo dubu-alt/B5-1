@@ -145,3 +145,38 @@ WHERE user_id = 9 AND reel_id = 2;
 -- 적용 이유: "사용자별 릴스 조회(WHERE user_id = ?)"와 users-reels JOIN 조건이
 --           매우 빈번하게 사용되므로, 이 컬럼에 인덱스를 걸어 조회 속도를 높인다
 CREATE INDEX idx_reels_user_id ON reels(user_id);
+
+-- ============================================================
+-- [무결성 검증] FK 제약조건이 없는 값 참조를 실제로 막는지 확인
+-- ============================================================
+
+-- 검증 1. 존재하지 않는 user_id(999)를 참조하는 릴스를 강제로 삽입 시도
+-- 아래 INSERT는 의도적으로 실패해야 하는 검증용 쿼리이다.
+-- users 테이블에 user_id = 999인 사용자가 없기 때문에
+-- reels.user_id -> users.user_id FK 제약조건에 걸려 삽입이 거부된다.
+INSERT INTO reels (reel_id, user_id, caption, video_url, duration_seconds, view_count, upload_date, hashtags)
+VALUES (99, 999, '무결성 테스트용 릴스', 'https://reels.example.com/fake', 10, 0, '2026-07-14', 'test');
+
+-- 실제 실행 결과 (SQLite):
+--   sqlite3.IntegrityError: FOREIGN KEY constraint failed
+--
+-- 왜 막히는가:
+--   PRAGMA foreign_keys = ON 상태에서, reels.user_id는 users.user_id를
+--   참조하는 FK로 선언되어 있다. FK는 "자식 테이블의 값은 반드시
+--   부모 테이블에 실제로 존재하는 값이어야 한다"는 규칙을 강제한다.
+--   user_id = 999는 users 테이블에 존재하지 않으므로 참조 무결성이
+--   깨지는 것을 DB 엔진이 자동으로 차단한다.
+
+-- 검증 2. 존재하지 않는 reel_id(999)를 참조하는 댓글을 강제로 삽입 시도
+-- likes/comments 두 테이블 모두 reels를 참조하는 FK가 걸려 있음을 함께 확인한다.
+INSERT INTO comments (user_id, reel_id, content)
+VALUES (1, 999, '무결성 테스트용 댓글');
+
+-- 실제 실행 결과 (SQLite):
+--   sqlite3.IntegrityError: FOREIGN KEY constraint failed
+--   (comments.reel_id -> reels.reel_id FK가 존재하지 않는 reel_id=999 삽입을 차단)
+
+-- 검증 3. 실제 존재하는 값으로 바꾸면 정상적으로 삽입되는 것도 함께 확인 (대조군)
+INSERT INTO reels (reel_id, user_id, caption, video_url, duration_seconds, view_count, upload_date, hashtags)
+VALUES (99, 4, '무결성 테스트용 릴스', 'https://reels.example.com/fake', 10, 0, '2026-07-14', 'test');
+-- user_id = 4는 users 테이블에 실제로 존재하므로 정상 삽입된다.
